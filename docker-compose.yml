@@ -1,0 +1,20 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: laravel-backend:latest
+    container_name: laravel_backend_container
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - SEED_DATABASE=true # Seeds DB with test user on startup
+    volumes:
+      # Persistent storage for SQLite database to persist changes between container rebuilds
+      - db-data:/var/www/html/database
+
+volumes:
+  db-data:
