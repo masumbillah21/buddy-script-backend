@@ -6,18 +6,18 @@ This document outlines the proposed database design, Entity Relationship Diagram
 
 ## 1. Entity Relationship Diagram (ERD)
 
-Below is the database ERD modeled using Mermaid. It uses explicit relationships with native foreign keys for likes.
+Below is the database ERD modeled using Mermaid. It features explicit tables for reactions (such as like, love, haha) with native foreign keys.
 
 ```mermaid
 erDiagram
     users ||--o{ posts : "creates"
     users ||--o{ comments : "writes"
-    users ||--o{ post_likes : "likes"
-    users ||--o{ comment_likes : "likes"
+    users ||--o{ post_reactions : "reacts to"
+    users ||--o{ comment_reactions : "reacts to"
     posts ||--o{ comments : "has"
-    posts ||--o{ post_likes : "receives"
+    posts ||--o{ post_reactions : "receives"
     comments ||--o{ comments : "has replies (parent_id)"
-    comments ||--o{ comment_likes : "receives"
+    comments ||--o{ comment_reactions : "receives"
 
     users {
         bigint id PK
@@ -36,7 +36,7 @@ erDiagram
         text content "Nullable"
         varchar image_path "Nullable"
         varchar visibility "ENUM('public', 'private') Index"
-        int likes_count "Denormalized Counter"
+        int reactions_count "Denormalized Counter"
         int comments_count "Denormalized Counter"
         timestamp created_at "Index"
         timestamp updated_at
@@ -48,23 +48,25 @@ erDiagram
         bigint user_id FK "Index"
         bigint parent_id FK "Nullable, Index"
         text content
-        int likes_count "Denormalized Counter"
+        int reactions_count "Denormalized Counter"
         int replies_count "Denormalized Counter"
         timestamp created_at "Index"
         timestamp updated_at
     }
 
-    post_likes {
+    post_reactions {
         bigint id PK
         bigint user_id FK "Index"
         bigint post_id FK "Index"
+        varchar reaction_type "ENUM('like', 'love', 'haha', 'wow', 'sad', 'angry') Index"
         timestamp created_at
     }
 
-    comment_likes {
+    comment_reactions {
         bigint id PK
         bigint user_id FK "Index"
         bigint comment_id FK "Index"
+        varchar reaction_type "ENUM('like', 'love', 'haha', 'wow', 'sad', 'angry') Index"
         timestamp created_at
     }
 ```
@@ -103,7 +105,7 @@ Stores the user-generated posts. Supports text and an optional single image.
 | `content` | `TEXT` | Nullable | The text content of the post. |
 | `image_path` | `VARCHAR(255)` | Nullable | URL/path to the uploaded image in storage (S3/local). |
 | `visibility` | `VARCHAR(20)` | Default 'public', Not Null | `'public'` (visible to all) or `'private'` (author only). |
-| `likes_count` | `INT` | Default 0, Not Null | Denormalized count of likes to avoid expensive COUNT reads. |
+| `reactions_count` | `INT` | Default 0, Not Null | Denormalized count of all reactions combined to avoid expensive reads. |
 | `comments_count`| `INT` | Default 0, Not Null | Denormalized count of top-level comments + replies. |
 | `created_at` | `TIMESTAMP` | Default CURRENT_TIMESTAMP| Feed ordering basis. |
 | `updated_at` | `TIMESTAMP` | Default CURRENT_TIMESTAMP| Record update time. |
@@ -125,7 +127,7 @@ Stores comments and nested replies. Uses the **Adjacency List Pattern** with `pa
 | `user_id` | `BIGINT UNSIGNED` | Foreign Key (users.id), Not Null | The author of the comment/reply. |
 | `parent_id` | `BIGINT UNSIGNED` | Foreign Key (comments.id), Nullable| Reference to parent comment if it is a reply. |
 | `content` | `TEXT` | Not Null | The message text. |
-| `likes_count` | `INT` | Default 0, Not Null | Denormalized likes counter. |
+| `reactions_count` | `INT` | Default 0, Not Null | Denormalized count of all reactions combined. |
 | `replies_count` | `INT` | Default 0, Not Null | Denormalized replies counter. |
 | `created_at` | `TIMESTAMP` | Default CURRENT_TIMESTAMP| Ordering of comments/replies. |
 | `updated_at` | `TIMESTAMP` | Default CURRENT_TIMESTAMP| Record update time. |
@@ -139,35 +141,38 @@ Stores comments and nested replies. Uses the **Adjacency List Pattern** with `pa
 
 ---
 
-### `post_likes` Table
-Stores user likes for posts.
+### `post_reactions` Table
+Stores user reactions (like, love, haha, etc.) for posts.
 
 | Column | Type | Attributes | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `BIGINT UNSIGNED` | Primary Key, Auto Increment | Unique identifier. |
-| `user_id` | `BIGINT UNSIGNED` | Foreign Key (users.id), Not Null | User who liked the post. |
-| `post_id` | `BIGINT UNSIGNED` | Foreign Key (posts.id), Not Null | Post that was liked. |
+| `user_id` | `BIGINT UNSIGNED` | Foreign Key (users.id), Not Null | User who reacted to the post. |
+| `post_id` | `BIGINT UNSIGNED` | Foreign Key (posts.id), Not Null | Post that was reacted to. |
+| `reaction_type` | `VARCHAR(20)` | Not Null | `'like'`, `'love'`, `'haha'`, `'wow'`, `'sad'`, or `'angry'`. |
 | `created_at` | `TIMESTAMP` | Default CURRENT_TIMESTAMP| Timestamp of the action. |
 
 * **Indexes & Optimization**:
-  * Composite Unique Index: `(user_id, post_id)` - Ensures a user can only like a post once and allows checking "has liked" status in `O(1)`.
-  * Composite Lookup Index: `(post_id, created_at DESC)` - Used to display the list of users who liked the post.
+  * Composite Unique Index: `(user_id, post_id)` - **CRITICAL** to ensure a user can only have one active reaction per post. If they change their reaction (e.g. from `like` to `love`), the existing row is updated.
+  * Composite Lookup Index: `(post_id, created_at DESC)` - Used to display the list of users who reacted to the post.
+  * Index on `(post_id, reaction_type)` - Enables quick aggregation of reaction type breakdowns (e.g. how many "love" reactions vs "like" reactions).
 
 ---
 
-### `comment_likes` Table
-Stores user likes for comments and replies.
+### `comment_reactions` Table
+Stores user reactions (like, love, haha, etc.) for comments and replies.
 
 | Column | Type | Attributes | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `BIGINT UNSIGNED` | Primary Key, Auto Increment | Unique identifier. |
-| `user_id` | `BIGINT UNSIGNED` | Foreign Key (users.id), Not Null | User who liked the comment. |
-| `comment_id` | `BIGINT UNSIGNED` | Foreign Key (comments.id), Not Null | Comment or reply that was liked. |
+| `user_id` | `BIGINT UNSIGNED` | Foreign Key (users.id), Not Null | User who reacted to the comment. |
+| `comment_id` | `BIGINT UNSIGNED` | Foreign Key (comments.id), Not Null | Comment or reply that was reacted to. |
+| `reaction_type` | `VARCHAR(20)` | Not Null | `'like'`, `'love'`, `'haha'`, `'wow'`, `'sad'`, or `'angry'`. |
 | `created_at` | `TIMESTAMP` | Default CURRENT_TIMESTAMP| Timestamp of the action. |
 
 * **Indexes & Optimization**:
-  * Composite Unique Index: `(user_id, comment_id)` - Ensures a user can only like a comment/reply once and allows checking "has liked" status in `O(1)`.
-  * Composite Lookup Index: `(comment_id, created_at DESC)` - Used to display the list of users who liked the comment/reply.
+  * Composite Unique Index: `(user_id, comment_id)` - Ensures a user can only have one active reaction per comment/reply.
+  * Composite Lookup Index: `(comment_id, created_at DESC)` - Used to display the list of users who reacted to the comment/reply.
 
 ---
 
@@ -176,9 +181,9 @@ Stores user likes for comments and replies.
 Designing for **millions of posts and reads** requires shifting from purely normalized database queries to optimization, denormalization, and caching strategies.
 
 ### 1. Counter Denormalization
-* **The Problem**: Executing `SELECT COUNT(*) FROM post_likes WHERE post_id = ?` on every feed render will lock and slow down the database at scale.
-* **The Solution**: Maintain `likes_count` and `comments_count` directly in the `posts` and `comments` tables. 
-* **Implementation**: Increment/decrement these values using transactional atomic queries (e.g., `DB::raw('likes_count + 1')`) whenever a like is added/removed.
+* **The Problem**: Executing `SELECT COUNT(*) FROM post_reactions WHERE post_id = ?` on every feed render will lock and slow down the database at scale.
+* **The Solution**: Maintain `reactions_count` and `comments_count` directly in the `posts` and `comments` tables. 
+* **Implementation**: Increment/decrement these values using transactional atomic queries (e.g., `DB::raw('reactions_count + 1')`) whenever a reaction is added/removed.
 
 ### 2. Composite Query Indexing
 * **Feed Retrieval**: The primary query fetches the latest public posts:
@@ -190,38 +195,38 @@ Designing for **millions of posts and reads** requires shifting from purely norm
   ```
   An index on `(visibility, created_at DESC)` allows the engine to fetch the latest 20 posts in `O(log N)` without scanning millions of rows or executing a costly filesort.
 
-### 3. Quick "Has Liked" Check
-* When rendering a feed page of 20 posts, we must show whether the current user liked each post.
-* **The Optimization**: Instead of running 20 individual queries, fetch all liked post IDs for the current user in a single batch query:
+### 3. Quick "Has Reacted" Check
+* When rendering a feed page of 20 posts, we must show whether the current user reacted to each post and what reaction type they used.
+* **The Optimization**: Instead of running 20 individual queries, fetch all active reactions for the current user in a single batch query:
   ```sql
-  SELECT post_id FROM post_likes 
+  SELECT post_id, reaction_type FROM post_reactions 
   WHERE user_id = :current_user_id 
     AND post_id IN (:post_ids);
   ```
   This is backed by the composite unique index `(user_id, post_id)` and returns instantly.
 
-### 4. Fetching the List of Liked/Reacted Users
-* **The Requirement**: Users want to see a list of who has liked a specific post or comment (ordered by the most recent reaction).
+### 4. Fetching the List of Reacted Users
+* **The Requirement**: Users want to see a list of who has reacted to a specific post or comment (ordered by the most recent reaction, optionally filtered by reaction type).
 * **The Queries**:
-  * **For a Post**:
+  * **For a Post (All Reactions)**:
     ```sql
-    SELECT u.id, u.first_name, u.last_name, u.email 
-    FROM post_likes pl
-    JOIN users u ON pl.user_id = u.id
-    WHERE pl.post_id = :post_id
-    ORDER BY pl.created_at DESC
+    SELECT u.id, u.first_name, u.last_name, u.email, pr.reaction_type 
+    FROM post_reactions pr
+    JOIN users u ON pr.user_id = u.id
+    WHERE pr.post_id = :post_id
+    ORDER BY pr.created_at DESC
     LIMIT 20 OFFSET :offset;
     ```
-  * **For a Comment**:
+  * **For a Post (Filtered by Reaction Type, e.g. "love")**:
     ```sql
-    SELECT u.id, u.first_name, u.last_name, u.email 
-    FROM comment_likes cl
-    JOIN users u ON cl.user_id = u.id
-    WHERE cl.comment_id = :comment_id
-    ORDER BY cl.created_at DESC
+    SELECT u.id, u.first_name, u.last_name, u.email, pr.reaction_type 
+    FROM post_reactions pr
+    JOIN users u ON pr.user_id = u.id
+    WHERE pr.post_id = :post_id AND pr.reaction_type = :reaction_type
+    ORDER BY pr.created_at DESC
     LIMIT 20 OFFSET :offset;
     ```
-* **The Optimization**: These queries use the composite lookup indexes `(post_id, created_at DESC)` and `(comment_id, created_at DESC)` on the likes tables. The database engine can locate the exact rows directly, join them with the primary key index on the `users` table (`O(1)` per user), and paginate the results without performing any full-table scans.
+* **The Optimization**: These queries use the composite lookup indexes `(post_id, created_at DESC)` and `(post_id, reaction_type, created_at DESC)` on the reaction tables. The database engine can locate the exact rows directly, join them with the primary key index on the `users` table (`O(1)` per user), and paginate the results without performing any full-table scans.
 
 ### 5. Read Replicas & Database Sharding
 * **Primary/Replica Setup**: Reads typically outnumber writes in social feeds by 10:1 or 100:1. Setup read replicas to distribute reading workloads.

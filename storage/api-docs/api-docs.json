@@ -1,0 +1,28 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Buddy Script API",
+        "description": "API Documentation for the Buddy Script Backend API",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "API Server Host"
+        }
+    ],
+    "paths": {
+        "/api/up": {
+            "get": {
+                "summary": "API Health Check",
+                "description": "Check if the API is up and running",
+                "operationId": "028fe00b21e9b82b38e9a61afa696546",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        }
+    }
+}
