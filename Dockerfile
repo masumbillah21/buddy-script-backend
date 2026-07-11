@@ -1,4 +1,4 @@
-FROM php:8.3-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 # Set working directory
 WORKDIR /var/www/html
@@ -42,12 +42,12 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Copy application files (with correct permissions)
 COPY --chown=www-data:www-data . /var/www/html
 
-# Run composer install (optimized for production)
+# Run composer install
 # Note: Since .env might not exist yet, we run with --no-scripts to prevent Laravel hooks from failing
-RUN composer install --no-dev --no-interaction --no-plugins --no-scripts --prefer-dist
+RUN composer install --no-interaction --no-plugins --no-scripts --prefer-dist
 
 # Run composer autoload optimization
-RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
+RUN composer dump-autoload --optimize --classmap-authoritative
 
 # Ensure storage and cache directories exist and are writable
 RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache && \
