@@ -48,6 +48,10 @@ if [ "$SEED_DATABASE" = "true" ]; then
     php artisan db:seed --force
 fi
 
+# Generate Swagger API documentation
+echo "Generating Swagger documentation..."
+php artisan l5-swagger:generate
+
 # Correct folder permissions for Laravel storage and bootstrap cache
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 

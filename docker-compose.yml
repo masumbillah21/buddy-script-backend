@@ -14,7 +14,7 @@ services:
       - SEED_DATABASE=true # Seeds DB with test user on startup
     volumes:
       # Persistent storage for SQLite database to persist changes between container rebuilds
-      - db-data:/var/www/html/database
+      - db-data:/var/www/html/database/sqlite
 
 volumes:
   db-data:
