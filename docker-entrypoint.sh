@@ -4,7 +4,7 @@ set -e
 # Copy env if not exists
 if [ ! -f .env ]; then
     echo "Creating .env file..."
-    cp .env.example .env
+    cp .env .env
 fi
 
 # Generate app key if not set
