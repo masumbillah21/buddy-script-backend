@@ -12,6 +12,974 @@
         }
     ],
     "paths": {
+        "/api/register": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User Registration",
+                "description": "Register a new user account",
+                "operationId": "8e4e3cb7b46126f4696379d3c7eeb4ad",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john.doe@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "Secret123!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User Login",
+                "description": "Log in with email and password to receive a bearer token",
+                "operationId": "222b2625838e3c57e017987f73598fda",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john.doe@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "Secret123!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "1|abcdef123456..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User Logout",
+                "description": "Revoke user auth tokens",
+                "operationId": "ad65cbbd4e9f201619eae184a5961a98",
+                "responses": {
+                    "200": {
+                        "description": "Logged out successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/me": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get Authenticated Profile",
+                "description": "Retrieve profile of the currently logged-in user",
+                "operationId": "8367feff40ba10e43187792cad3132c1",
+                "responses": {
+                    "200": {
+                        "description": "Profile retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/posts/{postId}/comments": {
+            "get": {
+                "tags": [
+                    "Comments"
+                ],
+                "summary": "Retrieve Post Comments",
+                "description": "Fetch a paginated list of top-level comments and their immediate replies for a specific post",
+                "operationId": "0c3d663ee305a4dc4e4376fb83dad49a",
+                "parameters": [
+                    {
+                        "name": "postId",
+                        "in": "path",
+                        "description": "Target Post ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comments retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Comment"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Comments"
+                ],
+                "summary": "Add Comment or Reply",
+                "description": "Submit a new top-level comment or a replies comment by supplying a parent_id",
+                "operationId": "cbac278a53396556eab43b1332f8f5dd",
+                "parameters": [
+                    {
+                        "name": "postId",
+                        "in": "path",
+                        "description": "Target Post ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "content"
+                                ],
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "example": "This is a great comment!"
+                                    },
+                                    "parent_id": {
+                                        "type": "integer",
+                                        "example": 5,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Comment or reply added successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Comment"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid parent comment reference"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Post not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/comments/{id}": {
+            "delete": {
+                "tags": [
+                    "Comments"
+                ],
+                "summary": "Delete Comment",
+                "description": "Delete an existing comment or reply (cascade deletes nested replies)",
+                "operationId": "b683c30a239aa780ffc7e9b219e90811",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Comment ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comment deleted successfully"
+                    },
+                    "403": {
+                        "description": "Unauthorized to delete this comment"
+                    },
+                    "404": {
+                        "description": "Comment not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/posts": {
+            "get": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Retrieve Public Social Feed",
+                "description": "Fetch a paginated list of public social posts",
+                "operationId": "3fda362e2e082b5357ac416e7767e435",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Social feed retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Post"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Create New Post",
+                "description": "Publish a new text and/or image post",
+                "operationId": "dcb66200c3132996151884ac232cf439",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Hello World!",
+                                        "nullable": true
+                                    },
+                                    "image_path": {
+                                        "type": "string",
+                                        "example": "uploads/posts/image.jpg",
+                                        "nullable": true
+                                    },
+                                    "visibility": {
+                                        "type": "string",
+                                        "default": "public",
+                                        "enum": [
+                                            "public",
+                                            "private"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Post created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Post"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{userId}/posts": {
+            "get": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Retrieve User Profile Feed",
+                "description": "Fetch a paginated feed of posts created by a specific user. Authenticated users can view their own private posts; public profiles show public posts only.",
+                "operationId": "a10935ad67130a3b8d609765b5056d57",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "Target User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User feed retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Post"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                }
+            }
+        },
+        "/api/posts/{id}": {
+            "get": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get Post Details",
+                "description": "Retrieve a specific post by ID. Enforces visibility validation.",
+                "operationId": "142b5adb0520cca80cedfe09d9298332",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Post ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Post retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Post"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - private post access"
+                    },
+                    "404": {
+                        "description": "Post not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Update Post",
+                "description": "Modify content, image path, or visibility of an existing post",
+                "operationId": "650f4bed0846d9350903d8a17c7b503a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Post ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Updated content",
+                                        "nullable": true
+                                    },
+                                    "image_path": {
+                                        "type": "string",
+                                        "example": "uploads/posts/new_image.jpg",
+                                        "nullable": true
+                                    },
+                                    "visibility": {
+                                        "type": "string",
+                                        "enum": [
+                                            "public",
+                                            "private"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Post updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Post"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized to update this post"
+                    },
+                    "404": {
+                        "description": "Post not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Delete Post",
+                "description": "Delete an existing post (and its comments/reactions)",
+                "operationId": "9d99f2e42af2f722a058a86245aa856f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Post ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Post deleted successfully"
+                    },
+                    "403": {
+                        "description": "Unauthorized to delete this post"
+                    },
+                    "404": {
+                        "description": "Post not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/posts/{postId}/react": {
+            "post": {
+                "tags": [
+                    "Reactions"
+                ],
+                "summary": "React to Post",
+                "description": "Add, update, or remove reaction on a post. Sending the exact same reaction_type will toggle it off (delete it).",
+                "operationId": "40d3611d36967546f0275bae0f5cf1ca",
+                "parameters": [
+                    {
+                        "name": "postId",
+                        "in": "path",
+                        "description": "Target Post ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reaction_type"
+                                ],
+                                "properties": {
+                                    "reaction_type": {
+                                        "type": "string",
+                                        "example": "like",
+                                        "enum": [
+                                            "like",
+                                            "love",
+                                            "haha",
+                                            "wow",
+                                            "sad",
+                                            "angry"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reaction registered or updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Reaction registered"
+                                        },
+                                        "data": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Reaction"
+                                                }
+                                            ],
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Post not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/comments/{commentId}/react": {
+            "post": {
+                "tags": [
+                    "Reactions"
+                ],
+                "summary": "React to Comment",
+                "description": "Add, update, or remove reaction on a comment/reply. Sending the exact same reaction_type toggles it off.",
+                "operationId": "01f0d51cc8e30b8f88267c24db72be75",
+                "parameters": [
+                    {
+                        "name": "commentId",
+                        "in": "path",
+                        "description": "Target Comment ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reaction_type"
+                                ],
+                                "properties": {
+                                    "reaction_type": {
+                                        "type": "string",
+                                        "example": "love",
+                                        "enum": [
+                                            "like",
+                                            "love",
+                                            "haha",
+                                            "wow",
+                                            "sad",
+                                            "angry"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reaction updated or toggled successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Reaction registered"
+                                        },
+                                        "data": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Reaction"
+                                                }
+                                            ],
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Comment not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/posts/{postId}/reactions": {
+            "get": {
+                "tags": [
+                    "Reactions"
+                ],
+                "summary": "Get Post Reaction List",
+                "description": "Fetch a paginated list of users who reacted to a post. Optionally filter by reaction_type.",
+                "operationId": "859d19ead3d2ff864c06457f39274c8c",
+                "parameters": [
+                    {
+                        "name": "postId",
+                        "in": "path",
+                        "description": "Target Post ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "reaction_type",
+                        "in": "query",
+                        "description": "Filter by type (like, love, etc.)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reaction list retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ReactionUser"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found"
+                    }
+                }
+            }
+        },
+        "/api/comments/{commentId}/reactions": {
+            "get": {
+                "tags": [
+                    "Reactions"
+                ],
+                "summary": "Get Comment Reaction List",
+                "description": "Fetch a paginated list of users who reacted to a specific comment/reply.",
+                "operationId": "1b4ad626539381b535fa8459d23b9941",
+                "parameters": [
+                    {
+                        "name": "commentId",
+                        "in": "path",
+                        "description": "Target Comment ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reaction list retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ReactionUser"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found"
+                    }
+                }
+            }
+        },
         "/api/up": {
             "get": {
                 "summary": "API Health Check",
@@ -24,5 +992,205 @@
                 }
             }
         }
-    }
+    },
+    "components": {
+        "schemas": {
+            "User": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "example": "John"
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "example": "Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "john.doe@example.com"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-07-12T13:22:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "Comment": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "post_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "parent_id": {
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "content": {
+                        "type": "string",
+                        "example": "This is a comment"
+                    },
+                    "reactions_count": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "replies_count": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "replies": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Comment"
+                        },
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-07-12T13:22:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-07-12T13:22:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "Post": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "content": {
+                        "type": "string",
+                        "example": "Hello World!",
+                        "nullable": true
+                    },
+                    "image_path": {
+                        "type": "string",
+                        "example": "uploads/posts/image.jpg",
+                        "nullable": true
+                    },
+                    "visibility": {
+                        "type": "string",
+                        "example": "public"
+                    },
+                    "reactions_count": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "comments_count": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "my_reaction": {
+                        "type": "string",
+                        "example": "love",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-07-12T13:22:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-07-12T13:22:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "Reaction": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "reaction_type": {
+                        "type": "string",
+                        "example": "like"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-07-12T13:22:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "ReactionUser": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "example": "John"
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "example": "Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "john.doe@example.com"
+                    },
+                    "reaction_type": {
+                        "type": "string",
+                        "example": "like"
+                    },
+                    "reacted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-07-12T13:22:00Z"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Authentication",
+            "description": "Authentication"
+        },
+        {
+            "name": "Comments",
+            "description": "Comments"
+        },
+        {
+            "name": "Posts",
+            "description": "Posts"
+        },
+        {
+            "name": "Reactions",
+            "description": "Reactions"
+        }
+    ]
 }
