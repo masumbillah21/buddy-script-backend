@@ -80,6 +80,8 @@ test('user can create a post and retrieve it from the public feed', function () 
     $responsePrivate->assertStatus(201);
 
     // Guest cannot retrieve feed
+    $this->flushHeaders();
+    auth()->forgetUser();
     $this->getJson('/api/posts')->assertStatus(401);
 
     // Retrieve public feed (authenticated access)
