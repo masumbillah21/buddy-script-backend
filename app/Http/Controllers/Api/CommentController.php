@@ -21,6 +21,7 @@ class CommentController extends Controller
         path: "/api/posts/{postId}/comments",
         summary: "Retrieve Post Comments",
         description: "Fetch a paginated list of top-level comments and their immediate replies for a specific post",
+        security: [["sanctum" => []]],
         tags: ["Comments"],
         parameters: [
             new OA\Parameter(name: "postId", in: "path", description: "Target Post ID", required: true, schema: new OA\Schema(type: "integer")),

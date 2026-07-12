@@ -24,6 +24,7 @@ class PostController extends Controller
         path: "/api/posts",
         summary: "Retrieve Public Social Feed",
         description: "Fetch a paginated list of public social posts",
+        security: [["sanctum" => []]],
         tags: ["Posts"],
         parameters: [
             new OA\Parameter(name: "per_page", in: "query", description: "Items per page", required: false, schema: new OA\Schema(type: "integer", default: 20))
@@ -68,6 +69,7 @@ class PostController extends Controller
         path: "/api/users/{userId}/posts",
         summary: "Retrieve User Profile Feed",
         description: "Fetch a paginated feed of posts created by a specific user. Authenticated users can view their own private posts; public profiles show public posts only.",
+        security: [["sanctum" => []]],
         tags: ["Posts"],
         parameters: [
             new OA\Parameter(name: "userId", in: "path", description: "Target User ID", required: true, schema: new OA\Schema(type: "integer")),
@@ -158,6 +160,7 @@ class PostController extends Controller
         path: "/api/posts/{id}",
         summary: "Get Post Details",
         description: "Retrieve a specific post by ID. Enforces visibility validation.",
+        security: [["sanctum" => []]],
         tags: ["Posts"],
         parameters: [
             new OA\Parameter(name: "id", in: "path", description: "Post ID", required: true, schema: new OA\Schema(type: "integer"))

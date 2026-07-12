@@ -134,6 +134,7 @@ class ReactionController extends Controller
         path: "/api/posts/{postId}/reactions",
         summary: "Get Post Reaction List",
         description: "Fetch a paginated list of users who reacted to a post. Optionally filter by reaction_type.",
+        security: [["sanctum" => []]],
         tags: ["Reactions"],
         parameters: [
             new OA\Parameter(name: "postId", in: "path", description: "Target Post ID", required: true, schema: new OA\Schema(type: "integer")),
@@ -166,6 +167,7 @@ class ReactionController extends Controller
         path: "/api/comments/{commentId}/reactions",
         summary: "Get Comment Reaction List",
         description: "Fetch a paginated list of users who reacted to a specific comment/reply.",
+        security: [["sanctum" => []]],
         tags: ["Reactions"],
         parameters: [
             new OA\Parameter(name: "commentId", in: "path", description: "Target Comment ID", required: true, schema: new OA\Schema(type: "integer")),
