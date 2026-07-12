@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-#[Fillable(['user_id', 'content', 'image_path', 'visibility', 'reactions_count', 'comments_count'])]
+#[Fillable(['user_id', 'content', 'image_path', 'video_path', 'title', 'type', 'event_date', 'visibility', 'reactions_count', 'comments_count'])]
 class Post extends Model
 {
     use HasFactory;
@@ -14,6 +14,7 @@ class Post extends Model
     protected $casts = [
         'reactions_count' => 'integer',
         'comments_count' => 'integer',
+        'event_date' => 'datetime',
     ];
 
     public function user()

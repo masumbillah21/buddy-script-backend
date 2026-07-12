@@ -16,6 +16,10 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->text('content')->nullable();
             $table->string('image_path')->nullable();
+            $table->string('video_path')->nullable();
+            $table->string('title')->nullable();
+            $table->string('type', 20)->default('text');
+            $table->dateTime('event_date')->nullable();
             $table->string('visibility', 20)->default('public'); // public, private
             $table->integer('reactions_count')->default(0);
             $table->integer('comments_count')->default(0);

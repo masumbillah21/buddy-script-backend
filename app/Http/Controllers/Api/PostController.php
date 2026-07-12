@@ -66,9 +66,42 @@ class PostController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'content' => 'required_without:image_path|nullable|string',
-            'image_path' => 'required_without:content|nullable|string|max:255',
+            'content' => 'nullable|string',
+            'image' => 'nullable|file|image|max:10240',
+            'video' => 'nullable|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/ogg,video/webm|max:51200',
+            'image_path' => 'nullable|string|max:255',
+            'video_path' => 'nullable|string|max:255',
+            'title' => 'nullable|string|max:255',
+            'type' => 'sometimes|string|in:text,photo,video,event,article',
+            'event_date' => 'nullable|date',
             'visibility' => 'sometimes|string|in:public,private',
+        ]);
+
+        $imagePath = $request->input('image_path');
+        if ($request->hasFile('image')) {
+            if (!file_exists(public_path('uploads'))) {
+                mkdir(public_path('uploads'), 0777, true);
+            }
+            $file = $request->file('image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads'), $filename);
+            $imagePath = '/uploads/' . $filename;
+        }
+
+        $videoPath = $request->input('video_path');
+        if ($request->hasFile('video')) {
+            if (!file_exists(public_path('uploads'))) {
+                mkdir(public_path('uploads'), 0777, true);
+            }
+            $file = $request->file('video');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads'), $filename);
+            $videoPath = '/uploads/' . $filename;
+        }
+
+        $request->merge([
+            'image_path' => $imagePath,
+            'video_path' => $videoPath,
         ]);
 
         $dto = CreatePostDTO::fromRequest($request);
