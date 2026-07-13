@@ -20,22 +20,22 @@ class PostSeeder extends Seeder
                 [
                     'title' => 'Healthy Tracking App',
                     'content' => 'Building a tracking dashboard for daily workouts and nutrition plans.',
-                    'image_path' => 'uploads/post1.png',
-                    'type' => 'image',
+                    'image_path' => '/uploads/post1.png',
+                    'type' => 'photo',
                     'visibility' => 'public',
                 ],
                 [
                     'title' => 'Minimalist Workspace Design',
                     'content' => 'Loving the clean vibes of my upgraded remote desktop setup.',
-                    'image_path' => 'uploads/post2.png',
-                    'type' => 'image',
+                    'image_path' => '/uploads/post2.png',
+                    'type' => 'photo',
                     'visibility' => 'public',
                 ],
                 [
                     'title' => 'Innovative UI Components',
                     'content' => 'Refactoring social cards and reactions badges with custom layout styling.',
-                    'image_path' => 'uploads/post3.png',
-                    'type' => 'image',
+                    'image_path' => '/uploads/post3.png',
+                    'type' => 'photo',
                     'visibility' => 'public',
                 ]
             ];

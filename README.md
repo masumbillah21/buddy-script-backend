@@ -1,58 +1,73 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Appifylab Social Platform API (Backend)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This is the Laravel-based backend API service for the Appifylab Social Platform task, supplying token authentication, post feeds, event/article postings, nested comments/replies, dynamic reactions, and Swagger documentation.
 
-## About Laravel
+## Tech Stack & Architecture
+* **Framework**: Laravel 13 (PHP 8.4-FPM)
+* **Database**: SQLite (mounted inside persistent docker volumes)
+* **Process Manager**: Supervisord (managing PHP-FPM and Nginx)
+* **API Documentation**: OpenAPI / Swagger (via DarkaOnline/L5-Swagger)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features Implemented
+1. **User Authentication**:
+   * Uses **Laravel Sanctum** token-based API authentication.
+   * Endpoints for User Registration, Login, Logout, and Current User profile fetching.
+2. **Posts Management**:
+   * Support for **Text, Image, Video, and Event** posts.
+   * Public and private visibility options.
+   * Dynamic post deletions with automatic media asset cleanup.
+3. **Comment & Reply Trees**:
+   * One-level deep nested reply structure.
+   * Real-time counter updates on parent comments (`replies_count`) and posts (`comments_count`).
+4. **Dynamic Reactions System**:
+   * Supports 6 distinct reaction types: `like`, `love`, `haha`, `wow`, `sad`, `angry`.
+   * Real-time reaction toggling and swapping for **both Posts and Comments**.
+   * Batch distinct active reaction types loader to optimize SQL query speeds on feeds.
+5. **Interactive Swagger Documentation**:
+   * OpenAPI endpoints fully documented and interactive.
+   * Available locally at: [http://localhost:8000/api/documentation](http://localhost:8000/api/documentation).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Database Seeding
+To support immediate testing, we configured the following seeder structure inside `DatabaseSeeder`:
+1. **`UserSeeder`**: Seeds 5 default users with password set to `12345678` and assigns custom profile avatar image paths:
+   * **Masum Billah** (`mbillah21@gmail.com`)
+   * **Dylan Field** (`dylan@figma.com`)
+   * **Steve Jobs** (`steve@apple.com`)
+   * **Ryan Roslansky** (`ryan@linkedin.com`)
+   * **Satya Nadella** (`satya@microsoft.com`)
+2. **`PostSeeder`**: Seeds 3 image posts for *each* of the 5 users.
+3. **`CommentSeeder`**: Seeds standard comments and nested reply chains.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Setup & Local Development
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
+### 1. Build and Run Containers
+Rebuild the container images and spin up the Docker network:
 ```bash
-composer require laravel/boost --dev
+docker compose up --build -d
+```
+The backend service will listen on [http://localhost:8000](http://localhost:8000).
 
-php artisan boost:install
+### 2. Run Database Migrations and Seeders
+To reset the SQLite schema and seed the database manually inside the running container:
+```bash
+docker compose exec backend php artisan migrate:fresh --seed
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 3. Generate Swagger OpenAPI Docs
+If you modify endpoints or Swagger annotations, regenerate the output files:
+```bash
+docker compose exec backend php artisan l5-swagger:generate
+```
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Large Media Configuration
+PHP-FPM and Nginx have been configured inside the container environment to handle large file uploads up to **60MB** (e.g. video files) to prevent `413 Request Entity Too Large` errors:
+* Custom config injection at: `/usr/local/etc/php/conf.d/uploads.ini` (`upload_max_filesize=60M`, `post_max_size=60M`).
+* Nginx directive: `client_max_body_size 60M;`.
