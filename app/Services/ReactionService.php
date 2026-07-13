@@ -94,4 +94,9 @@ class ReactionService
     {
         return $this->reactionRepository->getPostReactionTypesForUser($userId, $postIds);
     }
+
+    public function getCommentReactionTypesForUser(int $userId, array $commentIds): array
+    {
+        return $this->reactionRepository->getCommentReactionTypesForUser($userId, $commentIds);
+    }
 }

@@ -23,6 +23,7 @@ class CommentResource extends JsonResource
             'reactions_count' => (int) $this->reactions_count,
             'replies_count' => (int) $this->replies_count,
             'replies' => CommentResource::collection($this->whenLoaded('replies')),
+            'my_reaction' => $this->my_reaction ?? null,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

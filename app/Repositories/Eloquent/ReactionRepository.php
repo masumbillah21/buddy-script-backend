@@ -87,4 +87,12 @@ class ReactionRepository implements ReactionRepositoryInterface
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
     }
+
+    public function getCommentReactionTypesForUser(int $userId, array $commentIds): array
+    {
+        return CommentReaction::where('user_id', $userId)
+            ->whereIn('comment_id', $commentIds)
+            ->pluck('reaction_type', 'comment_id')
+            ->toArray();
+    }
 }

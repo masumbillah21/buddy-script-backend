@@ -22,4 +22,5 @@ interface ReactionRepositoryInterface
     public function deleteCommentReaction(CommentReaction $reaction): bool;
     public function updateCommentReaction(CommentReaction $reaction, string $type): bool;
     public function getCommentReactions(int $commentId, int $perPage = 20): LengthAwarePaginator;
+    public function getCommentReactionTypesForUser(int $userId, array $commentIds): array;
 }
