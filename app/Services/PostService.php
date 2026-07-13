@@ -7,7 +7,7 @@ use App\DTOs\Post\UpdatePostDTO;
 use App\Models\Post;
 use App\Repositories\Contracts\PostRepositoryInterface;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 
 class PostService
 {
@@ -15,12 +15,12 @@ class PostService
         protected PostRepositoryInterface $postRepository
     ) {}
 
-    public function getFeed(int $perPage = 20): LengthAwarePaginator
+    public function getFeed(int $perPage = 20): CursorPaginator
     {
         return $this->postRepository->getFeed($perPage);
     }
 
-    public function getUserFeed(int $userId, ?int $currentUserId, int $perPage = 20): LengthAwarePaginator
+    public function getUserFeed(int $userId, ?int $currentUserId, int $perPage = 20): CursorPaginator
     {
         return $this->postRepository->getUserFeed($userId, $currentUserId, $perPage);
     }

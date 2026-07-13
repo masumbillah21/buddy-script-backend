@@ -4,29 +4,29 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Post;
 use App\Repositories\Contracts\PostRepositoryInterface;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 
 class PostRepository implements PostRepositoryInterface
 {
-    public function getFeed(int $perPage = 20): LengthAwarePaginator
+    public function getFeed(int $perPage = 20): CursorPaginator
     {
         return Post::with('user')
             ->where('visibility', 'public')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+            ->orderBy('id', 'desc')
+            ->cursorPaginate($perPage);
     }
 
-    public function getUserFeed(int $userId, ?int $currentUserId, int $perPage = 20): LengthAwarePaginator
+    public function getUserFeed(int $userId, ?int $currentUserId, int $perPage = 20): CursorPaginator
     {
         $query = Post::with('user')
             ->where('user_id', $userId)
-            ->orderBy('created_at', 'desc');
+            ->orderBy('id', 'desc');
 
         if ($currentUserId !== $userId) {
             $query->where('visibility', 'public');
         }
 
-        return $query->paginate($perPage);
+        return $query->cursorPaginate($perPage);
     }
 
     public function create(array $data): Post

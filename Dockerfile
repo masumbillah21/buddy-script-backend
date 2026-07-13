@@ -28,6 +28,10 @@ RUN chmod +x /usr/local/bin/install-php-extensions && \
     gd \
     intl
 
+# Configure PHP upload limits
+RUN echo "upload_max_filesize=60M" > /usr/local/etc/php/conf.d/uploads.ini && \
+    echo "post_max_size=60M" >> /usr/local/etc/php/conf.d/uploads.ini
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

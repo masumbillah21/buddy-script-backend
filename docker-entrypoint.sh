@@ -4,7 +4,7 @@ set -e
 # Copy env if not exists
 if [ ! -f .env ]; then
     echo "Creating .env file..."
-    cp .env .env
+    cp .env.example .env
 fi
 
 # Generate app key if not set
@@ -52,8 +52,9 @@ fi
 echo "Generating Swagger documentation..."
 php artisan l5-swagger:generate
 
-# Correct folder permissions for Laravel storage and bootstrap cache
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Correct folder permissions for Laravel storage, bootstrap cache, and public uploads
+mkdir -p /var/www/html/public/uploads
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/uploads
 
 # Execute container CMD
 exec "$@"
