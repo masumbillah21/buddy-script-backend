@@ -22,8 +22,7 @@ class CommentController extends Controller
     {
         $comments = $this->commentService->getComments($postId, (int) $request->input('per_page', 20));
 
-        $currentUserId = $request->user('sanctum')?->id;
-        if ($currentUserId && $comments->isNotEmpty()) {
+        if ($comments->isNotEmpty()) {
             $commentIds = [];
             foreach ($comments as $comment) {
                 $commentIds[] = $comment->id;
@@ -34,13 +33,28 @@ class CommentController extends Controller
                 }
             }
 
-            $myReactions = $this->reactionService->getCommentReactionTypesForUser($currentUserId, $commentIds);
+            // Get distinct reaction types for comments
+            $reactionTypes = \Illuminate\Support\Facades\DB::table('comment_reactions')
+                ->whereIn('comment_id', $commentIds)
+                ->select('comment_id', 'reaction_type')
+                ->distinct()
+                ->get()
+                ->groupBy('comment_id')
+                ->map(fn($items) => $items->pluck('reaction_type')->toArray())
+                ->toArray();
+
+            $currentUserId = $request->user('sanctum')?->id;
+            $myReactions = $currentUserId 
+                ? $this->reactionService->getCommentReactionTypesForUser($currentUserId, $commentIds)
+                : [];
 
             foreach ($comments as $comment) {
                 $comment->setAttribute('my_reaction', $myReactions[$comment->id] ?? null);
+                $comment->setAttribute('reaction_types', $reactionTypes[$comment->id] ?? []);
                 if ($comment->relationLoaded('replies')) {
                     foreach ($comment->replies as $reply) {
                         $reply->setAttribute('my_reaction', $myReactions[$reply->id] ?? null);
+                        $reply->setAttribute('reaction_types', $reactionTypes[$reply->id] ?? []);
                     }
                 }
             }

@@ -54,6 +54,9 @@ php artisan l5-swagger:generate
 
 # Correct folder permissions for Laravel storage, bootstrap cache, and public uploads
 mkdir -p /var/www/html/public/uploads
+if [ -d "/var/www/html/public/seed_assets" ]; then
+    cp -n /var/www/html/public/seed_assets/*.png /var/www/html/public/uploads/ 2>/dev/null || true
+fi
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/uploads
 
 # Execute container CMD
