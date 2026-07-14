@@ -23,17 +23,21 @@ jobs:
       - name: Install Composer Dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
-      - name: Deploy Backend via SSH/Rsync
-        uses: easingthemes/ssh-deploy@v5.1.0
+      - name: Prepare Release Directory
+        run: |
+          mkdir -p deploy
+          rsync -av ./ deploy/ --exclude='node_modules' --exclude='tests' --exclude='.git' --exclude='.github' --exclude='storage/logs/*' --exclude='storage/framework/cache/data/*' --exclude='storage/framework/sessions/*' --exclude='storage/framework/views/*' --exclude='.env' --exclude='database/sqlite' --exclude='Dockerfile*' --exclude='docker-compose*' --exclude='docker-entrypoint*' --exclude='supervisord*' --exclude='nginx.conf*'
+
+      - name: Deploy Backend via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.6
         with:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          PASSPHRASE: ${{ secrets.SSH_PASSKEY }}
-          REMOTE_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_USER: ${{ secrets.SSH_USERNAME }}
-          REMOTE_PORT: ${{ secrets.SSH_PORT }}
-          SOURCE: "./"
-          TARGET: ${{ secrets.SFTP_BACKEND_PATH }}
-          EXCLUDE: "/node_modules/, /tests/, /.git/, /.github/, /storage/logs/, /storage/framework/cache/data/, /storage/framework/sessions/, /storage/framework/views/, /.env, /database/sqlite/, /Dockerfile*, /docker-compose*, /docker-entrypoint*, /supervisord*, /nginx.conf*"
+          username: ${{ secrets.SSH_USERNAME }}
+          server: ${{ secrets.SSH_HOST }}
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh_passphrase: ${{ secrets.SSH_PASSKEY }}
+          port: ${{ secrets.SSH_PORT }}
+          local_path: './deploy/*'
+          remote_path: ${{ secrets.SFTP_BACKEND_PATH }}
 
       - name: Run Remote Commands via SSH
         uses: appleboy/ssh-action@v1.0.3
