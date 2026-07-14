@@ -23,33 +23,17 @@ jobs:
       - name: Install Composer Dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
-      - name: Upload Files via SFTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Deploy Backend via SSH/Rsync
+        uses: easingthemes/ssh-deploy@v5.1.0
         with:
-          server: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          passphrase: ${{ secrets.SSH_PASSKEY }}
-          port: ${{ secrets.SSH_PORT }}
-          local-dir: ./
-          server-dir: ${{ secrets.SFTP_BACKEND_PATH }}
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/tests/**
-            **/storage/logs/*
-            **/storage/framework/cache/data/*
-            **/storage/framework/sessions/*
-            **/storage/framework/views/*
-            **/.env
-            **/database/sqlite/**
-            **/Dockerfile*
-            **/docker-compose*
-            **/docker-entrypoint*
-            **/supervisord*
-            **/nginx.conf*
-          state-name: .ftp-deploy-sync-state-backend.json
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          PASSPHRASE: ${{ secrets.SSH_PASSKEY }}
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USERNAME }}
+          REMOTE_PORT: ${{ secrets.SSH_PORT }}
+          SOURCE: "./"
+          TARGET: ${{ secrets.SFTP_BACKEND_PATH }}
+          EXCLUDE: "/node_modules/, /tests/, /.git/, /.github/, /storage/logs/, /storage/framework/cache/data/, /storage/framework/sessions/, /storage/framework/views/, /.env, /database/sqlite/, /Dockerfile*, /docker-compose*, /docker-entrypoint*, /supervisord*, /nginx.conf*"
 
       - name: Run Remote Commands via SSH
         uses: appleboy/ssh-action@v1.0.3
