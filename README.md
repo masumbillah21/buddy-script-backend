@@ -4,7 +4,7 @@ This is the Laravel-based backend API service for the Appifylab Social Platform 
 
 ## Tech Stack & Architecture
 * **Framework**: Laravel 13 (PHP 8.4-FPM)
-* **Database**: SQLite (mounted inside persistent docker volumes)
+* **Database**: PostgreSQL (containerized service with persistent data volume)
 * **Process Manager**: Supervisord (managing PHP-FPM and Nginx)
 * **API Documentation**: OpenAPI / Swagger (via DarkaOnline/L5-Swagger)
 
@@ -34,7 +34,6 @@ This is the Laravel-based backend API service for the Appifylab Social Platform 
 ## Database Seeding
 To support immediate testing, we configured the following seeder structure inside `DatabaseSeeder`:
 1. **`UserSeeder`**: Seeds 5 default users with password set to `12345678` and assigns custom profile avatar image paths:
-   * **Masum Billah** (`mbillah21@gmail.com`)
    * **Dylan Field** (`dylan@figma.com`)
    * **Steve Jobs** (`steve@apple.com`)
    * **Ryan Roslansky** (`ryan@linkedin.com`)
@@ -54,7 +53,7 @@ docker compose up --build -d
 The backend service will listen on [http://localhost:8000](http://localhost:8000).
 
 ### 2. Run Database Migrations and Seeders
-To reset the SQLite schema and seed the database manually inside the running container:
+To reset the PostgreSQL schema and seed the database manually inside the running container:
 ```bash
 docker compose exec backend php artisan migrate:fresh --seed
 ```

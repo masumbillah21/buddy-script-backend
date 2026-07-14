@@ -12,9 +12,38 @@ services:
       - APP_ENV=local
       - APP_DEBUG=true
       - SEED_DATABASE=true # Seeds DB with test user on startup
+      - DB_CONNECTION=${DB_CONNECTION:-pgsql}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_DATABASE=${DB_DATABASE:-buddy_script}
+      - DB_USERNAME=${DB_USERNAME:-laravel}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
-      # Persistent storage for SQLite database to persist changes between container rebuilds
-      - db-data:/var/www/html/database/sqlite
+      - backend-uploads:/var/www/html/public/uploads
+
+  db:
+    image: postgres:15-alpine
+    container_name: postgres_backend_db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-buddy_script}
+      POSTGRES_USER: ${DB_USERNAME:-laravel}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  db-data:
+  postgres-data:
+  backend-uploads:
