@@ -70,7 +70,7 @@ class CommentController extends Controller
             'parent_id' => 'nullable|integer',
             'content' => 'required|string|max:5000',
         ]);
-
+        
         $dto = CreateCommentDTO::fromRequest($request, $postId);
         $comment = $this->commentService->addComment($dto);
 
