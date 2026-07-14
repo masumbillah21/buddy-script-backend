@@ -68,7 +68,7 @@ class CommentController extends Controller
     {
         $request->validate([
             'parent_id' => 'nullable|integer',
-            'content' => 'required|string',
+            'content' => 'required|string|max:5000',
         ]);
 
         $dto = CreateCommentDTO::fromRequest($request, $postId);

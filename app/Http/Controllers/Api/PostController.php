@@ -66,7 +66,7 @@ class PostController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'content' => 'nullable|string',
+            'content' => 'nullable|string|max:10000',
             'image' => 'nullable|file|image|max:10240',
             'video' => 'nullable|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/ogg,video/webm|max:51200',
             'image_path' => 'nullable|string|max:255',
