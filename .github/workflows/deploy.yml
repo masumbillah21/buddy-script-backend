@@ -23,26 +23,49 @@ jobs:
       - name: Install Composer Dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
-      - name: Prepare Release Directory
-        run: |
-          mkdir -p deploy
-          rsync -av ./ deploy/ --exclude='node_modules' --exclude='tests' --exclude='.git' --exclude='.github' --exclude='storage/logs/*' --exclude='storage/framework/cache/data/*' --exclude='storage/framework/sessions/*' --exclude='storage/framework/views/*' --exclude='.env' --exclude='database/sqlite' --exclude='Dockerfile*' --exclude='docker-compose*' --exclude='docker-entrypoint*' --exclude='supervisord*' --exclude='nginx.conf*'
-
-      - name: Start SSH Agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          ssh-passphrase: ${{ secrets.SSH_PASSKEY }}
-
       - name: Deploy Backend via SCP
-        run: |
-          scp -P ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no -r ./deploy/* ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.SFTP_BACKEND_PATH }}
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSKEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "./"
+          target: ${{ secrets.SFTP_BACKEND_PATH }}
+          overwrite: true
+          rm: false
+          exclude: |
+            .git*
+            node_modules
+            tests
+            storage/logs/*
+            storage/framework/cache/*
+            storage/framework/sessions/*
+            storage/framework/views/*
+            .github
+            *.env
+            *.md
+            Dockerfile*
+            docker-compose*
+            docker-entrypoint*
+            supervisord*
+            nginx.conf*
 
       - name: Run Remote Commands via SSH
-        run: |
-          ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSKEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
             cd ${{ secrets.SFTP_BACKEND_PATH }}
-            php artisan migrate --force
-            php artisan config:cache
-            php artisan route:cache
-          EOF
+            PHP_CLI=/usr/local/bin/php
+            $PHP_CLI artisan down || true
+            $PHP_CLI artisan migrate --force
+            $PHP_CLI artisan optimize:clear
+            $PHP_CLI artisan config:cache
+            $PHP_CLI artisan route:cache
+            $PHP_CLI artisan up
