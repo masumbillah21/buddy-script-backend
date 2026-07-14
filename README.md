@@ -70,3 +70,4 @@ docker compose exec backend php artisan l5-swagger:generate
 PHP-FPM and Nginx have been configured inside the container environment to handle large file uploads up to **60MB** (e.g. video files) to prevent `413 Request Entity Too Large` errors:
 * Custom config injection at: `/usr/local/etc/php/conf.d/uploads.ini` (`upload_max_filesize=60M`, `post_max_size=60M`).
 * Nginx directive: `client_max_body_size 60M;`.
+
