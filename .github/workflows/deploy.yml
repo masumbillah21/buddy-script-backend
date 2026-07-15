@@ -1,0 +1,113 @@
+name: 🚀 Laravel Backend Deploy via SSH (Namecheap)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Cache Composer packages
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: composer-
+
+      # 3️⃣ Setup PHP
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, curl, xml, pgsql, pdo_pgsql, pdo_mysql
+
+      # 4️⃣ Install Composer dependencies
+      - name: Install Composer Dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      # 5️⃣ Verify folder structure
+      - name: Verify Laravel folders
+        run: |
+          pwd
+          ls -al
+          test -d app && echo "✅ app folder found"
+          test -d public && echo "✅ public folder found"
+
+      # 6️⃣ Deploy built code to Namecheap via SSH (SCP)
+      - name: 🧬 Deploy to Server via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSKEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "./"
+          target: "${{ secrets.SERVER_TARGET_PATH }}"
+          overwrite: true
+          rm: false
+          exclude: |
+            .git*
+            node_modules
+            tests
+            storage/logs/*
+            storage/framework/cache/*
+            storage/framework/sessions/*
+            storage/framework/views/*
+            .github
+            *.env
+            *.md
+            docker-compose.yml
+            Dockerfile
+
+      # 7️⃣ Run Laravel post-deploy commands
+      - name: 🧩 Run Laravel Commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSKEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd ${{ secrets.SERVER_TARGET_PATH }}
+
+            # Use full path for PHP on Namecheap shared hosting
+            PHP_CLI=/usr/local/bin/php
+
+            echo "🚧 Putting site into maintenance mode..."
+            $PHP_CLI artisan down || true
+
+            echo "🔑 Ensuring app key exists..."
+            $PHP_CLI artisan key:generate --force
+
+            echo "🗄️ Running migrations..."
+            $PHP_CLI artisan migrate --force
+
+            echo "🧹 Clearing and caching configurations..."
+            $PHP_CLI artisan optimize:clear
+            $PHP_CLI artisan config:cache
+            $PHP_CLI artisan route:cache
+
+            echo "🚀 Restarting queues..."
+            $PHP_CLI artisan queue:restart || true
+
+            echo "⏰ Setting up Laravel Scheduler cron job..."
+            CRON_SCHEDULER="* * * * * cd ${{ secrets.SERVER_TARGET_PATH }} && $PHP_CLI artisan schedule:run >> /dev/null 2>&1"
+            (crontab -l 2>/dev/null | grep -q "schedule:run") || (crontab -l 2>/dev/null; echo "$CRON_SCHEDULER") | crontab -
+            echo "✅ Scheduler cron job configured"
+
+            echo "✅ Bringing site back online..."
+            $PHP_CLI artisan up
+
+            echo "🎉 Deployment completed successfully!"
