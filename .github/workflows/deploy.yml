@@ -90,6 +90,12 @@ jobs:
             $PHP_CLI artisan key:generate --force
             chmod -R 775 storage bootstrap/cache || true
 
+            echo "🖼️ Ensuring uploads directory & seed assets exist..."
+            mkdir -p public/uploads
+            cp -rn public/seed_assets/* public/uploads/ 2>/dev/null || true
+            chmod -R 775 public/uploads || true
+            $PHP_CLI artisan storage:link || true
+
             echo "🗄️ Running migrations & seeding sample data..."
             $PHP_CLI artisan migrate --force
             $PHP_CLI artisan db:seed --force || true
