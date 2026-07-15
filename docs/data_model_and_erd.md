@@ -1,12 +1,12 @@
 # Database Data Model and Entity Relationship Diagram (ERD)
 
-This document outlines the proposed database design, Entity Relationship Diagram (ERD), indexing strategies, and architectural considerations to support a highly performant and secure social feed application scaling to millions of users, posts, and reads.
+This document outlines the database design, Entity Relationship Diagram (ERD), indexing strategies, and architectural considerations to support a highly performant and secure social feed application scaling to millions of users, posts, and reads.
 
 ---
 
 ## 1. Entity Relationship Diagram (ERD)
 
-Below is the database ERD modeled using Mermaid. It features explicit tables for reactions (such as like, love, haha) with native foreign keys.
+Below is the database ERD modeled using Mermaid. It features explicit tables for reactions (such as like, love, haha) with native foreign keys and uses UUIDs for all primary and foreign key relations.
 
 ```mermaid
 erDiagram
@@ -20,21 +20,26 @@ erDiagram
     comments ||--o{ comment_reactions : "receives"
 
     users {
-        bigint id PK
+        uuid id PK
         varchar first_name
         varchar last_name
         varchar email UK "Index"
         varchar password
+        varchar profile_image "Nullable"
         timestamp email_verified_at "Nullable"
         timestamp created_at
         timestamp updated_at
     }
 
     posts {
-        bigint id PK
-        bigint user_id FK "Index"
+        uuid id PK
+        uuid user_id FK "Index"
         text content "Nullable"
         varchar image_path "Nullable"
+        varchar video_path "Nullable"
+        varchar title "Nullable"
+        varchar type "default 'text'"
+        timestamp event_date "Nullable"
         varchar visibility "ENUM('public', 'private') Index"
         int reactions_count "Denormalized Counter"
         int comments_count "Denormalized Counter"
@@ -43,10 +48,10 @@ erDiagram
     }
 
     comments {
-        bigint id PK
-        bigint post_id FK "Index"
-        bigint user_id FK "Index"
-        bigint parent_id FK "Nullable, Index"
+        uuid id PK
+        uuid post_id FK "Index"
+        uuid user_id FK "Index"
+        uuid parent_id FK "Nullable, Index"
         text content
         int reactions_count "Denormalized Counter"
         int replies_count "Denormalized Counter"
@@ -55,17 +60,17 @@ erDiagram
     }
 
     post_reactions {
-        bigint id PK
-        bigint user_id FK "Index"
-        bigint post_id FK "Index"
+        uuid id PK
+        uuid user_id FK "Index"
+        uuid post_id FK "Index"
         varchar reaction_type "ENUM('like', 'love', 'haha', 'wow', 'sad', 'angry') Index"
         timestamp created_at
     }
 
     comment_reactions {
-        bigint id PK
-        bigint user_id FK "Index"
-        bigint comment_id FK "Index"
+        uuid id PK
+        uuid user_id FK "Index"
+        uuid comment_id FK "Index"
         varchar reaction_type "ENUM('like', 'love', 'haha', 'wow', 'sad', 'angry') Index"
         timestamp created_at
     }
@@ -80,11 +85,12 @@ Stores user registration details and credentials.
 
 | Column | Type | Attributes | Description |
 | :--- | :--- | :--- | :--- |
-| `id` | `BIGINT UNSIGNED` | Primary Key, Auto Increment | Unique identifier. |
+| `id` | `UUID` | Primary Key | Unique identifier (generated via UUID v4). |
 | `first_name` | `VARCHAR(255)` | Not Null | User's first name. |
 | `last_name` | `VARCHAR(255)` | Not Null | User's last name. |
 | `email` | `VARCHAR(255)` | Unique, Not Null | Email address (used for login). |
 | `password` | `VARCHAR(255)` | Not Null | Hashed password (e.g., bcrypt/argon2). |
+| `profile_image` | `VARCHAR(255)` | Nullable | URL/path to the uploaded profile image. |
 | `email_verified_at`| `TIMESTAMP` | Nullable | Email verification timestamp. |
 | `created_at` | `TIMESTAMP` | Default CURRENT_TIMESTAMP| Record creation time. |
 | `updated_at` | `TIMESTAMP` | Default CURRENT_TIMESTAMP| Record update time. |
@@ -96,14 +102,18 @@ Stores user registration details and credentials.
 ---
 
 ### `posts` Table
-Stores the user-generated posts. Supports text and an optional single image.
+Stores user-generated posts. Supports text, images, videos, events, and article post formats.
 
 | Column | Type | Attributes | Description |
 | :--- | :--- | :--- | :--- |
-| `id` | `BIGINT UNSIGNED` | Primary Key, Auto Increment | Unique identifier. |
-| `user_id` | `BIGINT UNSIGNED` | Foreign Key (users.id), Not Null | Author of the post. |
+| `id` | `UUID` | Primary Key | Unique identifier (generated via UUID v4). |
+| `user_id` | `UUID` | Foreign Key (users.id), Not Null | Author of the post. |
 | `content` | `TEXT` | Nullable | The text content of the post. |
-| `image_path` | `VARCHAR(255)` | Nullable | URL/path to the uploaded image in storage (S3/local). |
+| `image_path` | `VARCHAR(255)` | Nullable | URL/path to the uploaded image in storage. |
+| `video_path` | `VARCHAR(255)` | Nullable | URL/path to the uploaded video in storage. |
+| `title` | `VARCHAR(255)` | Nullable | Optional title for event/article post formats. |
+| `type` | `VARCHAR(20)` | Default 'text', Not Null | `'text'`, `'photo'`, `'video'`, `'event'`, or `'article'`. |
+| `event_date` | `TIMESTAMP` | Nullable | Scheduled datetime (only for `'event'` post type). |
 | `visibility` | `VARCHAR(20)` | Default 'public', Not Null | `'public'` (visible to all) or `'private'` (author only). |
 | `reactions_count` | `INT` | Default 0, Not Null | Denormalized count of all reactions combined to avoid expensive reads. |
 | `comments_count`| `INT` | Default 0, Not Null | Denormalized count of top-level comments + replies. |
@@ -112,8 +122,9 @@ Stores the user-generated posts. Supports text and an optional single image.
 
 * **Indexes & Optimization**:
   * Primary Key on `id`
-  * Index on `user_id` for user profile feeds.
   * Composite Index: `(visibility, created_at DESC)` for fetching the global public feed fast.
+  * Composite Index: `(user_id, created_at DESC)` for fetching user profile feeds fast.
+  * Composite Index: `(user_id, visibility, created_at DESC)` for profile feeds viewed by other users.
 
 ---
 
@@ -122,10 +133,10 @@ Stores comments and nested replies. Uses the **Adjacency List Pattern** with `pa
 
 | Column | Type | Attributes | Description |
 | :--- | :--- | :--- | :--- |
-| `id` | `BIGINT UNSIGNED` | Primary Key, Auto Increment | Unique identifier. |
-| `post_id` | `BIGINT UNSIGNED` | Foreign Key (posts.id), Not Null | The root post this comment/reply belongs to. |
-| `user_id` | `BIGINT UNSIGNED` | Foreign Key (users.id), Not Null | The author of the comment/reply. |
-| `parent_id` | `BIGINT UNSIGNED` | Foreign Key (comments.id), Nullable| Reference to parent comment if it is a reply. |
+| `id` | `UUID` | Primary Key | Unique identifier (generated via UUID v4). |
+| `post_id` | `UUID` | Foreign Key (posts.id), Not Null | The root post this comment/reply belongs to. |
+| `user_id` | `UUID` | Foreign Key (users.id), Not Null | The author of the comment/reply. |
+| `parent_id` | `UUID` | Foreign Key (comments.id), Nullable| Reference to parent comment if it is a reply. |
 | `content` | `TEXT` | Not Null | The message text. |
 | `reactions_count` | `INT` | Default 0, Not Null | Denormalized count of all reactions combined. |
 | `replies_count` | `INT` | Default 0, Not Null | Denormalized replies counter. |
@@ -138,6 +149,8 @@ Stores comments and nested replies. Uses the **Adjacency List Pattern** with `pa
 * **Indexes**:
   * Primary Key on `id`
   * Composite Index: `(post_id, parent_id, created_at ASC)` to load comments and replies sequentially for a post.
+  * Index on `user_id` (foreign key constraint lookup index).
+  * Index on `parent_id` (foreign key constraint lookup index).
 
 ---
 
@@ -146,16 +159,16 @@ Stores user reactions (like, love, haha, etc.) for posts.
 
 | Column | Type | Attributes | Description |
 | :--- | :--- | :--- | :--- |
-| `id` | `BIGINT UNSIGNED` | Primary Key, Auto Increment | Unique identifier. |
-| `user_id` | `BIGINT UNSIGNED` | Foreign Key (users.id), Not Null | User who reacted to the post. |
-| `post_id` | `BIGINT UNSIGNED` | Foreign Key (posts.id), Not Null | Post that was reacted to. |
+| `id` | `UUID` | Primary Key | Unique identifier (generated via UUID v4). |
+| `user_id` | `UUID` | Foreign Key (users.id), Not Null | User who reacted to the post. |
+| `post_id` | `UUID` | Foreign Key (posts.id), Not Null | Post that was reacted to. |
 | `reaction_type` | `VARCHAR(20)` | Not Null | `'like'`, `'love'`, `'haha'`, `'wow'`, `'sad'`, or `'angry'`. |
 | `created_at` | `TIMESTAMP` | Default CURRENT_TIMESTAMP| Timestamp of the action. |
 
 * **Indexes & Optimization**:
   * Composite Unique Index: `(user_id, post_id)` - **CRITICAL** to ensure a user can only have one active reaction per post. If they change their reaction (e.g. from `like` to `love`), the existing row is updated.
   * Composite Lookup Index: `(post_id, created_at DESC)` - Used to display the list of users who reacted to the post.
-  * Index on `(post_id, reaction_type)` - Enables quick aggregation of reaction type breakdowns (e.g. how many "love" reactions vs "like" reactions).
+  * Index on `(post_id, reaction_type, created_at DESC)` - Enables quick aggregation of reaction type breakdowns.
 
 ---
 
@@ -164,9 +177,9 @@ Stores user reactions (like, love, haha, etc.) for comments and replies.
 
 | Column | Type | Attributes | Description |
 | :--- | :--- | :--- | :--- |
-| `id` | `BIGINT UNSIGNED` | Primary Key, Auto Increment | Unique identifier. |
-| `user_id` | `BIGINT UNSIGNED` | Foreign Key (users.id), Not Null | User who reacted to the comment. |
-| `comment_id` | `BIGINT UNSIGNED` | Foreign Key (comments.id), Not Null | Comment or reply that was reacted to. |
+| `id` | `UUID` | Primary Key | Unique identifier (generated via UUID v4). |
+| `user_id` | `UUID` | Foreign Key (users.id), Not Null | User who reacted to the comment. |
+| `comment_id` | `UUID` | Foreign Key (comments.id), Not Null | Comment or reply that was reacted to. |
 | `reaction_type` | `VARCHAR(20)` | Not Null | `'like'`, `'love'`, `'haha'`, `'wow'`, `'sad'`, or `'angry'`. |
 | `created_at` | `TIMESTAMP` | Default CURRENT_TIMESTAMP| Timestamp of the action. |
 
@@ -194,6 +207,7 @@ Designing for **millions of posts and reads** requires shifting from purely norm
   LIMIT 20;
   ```
   An index on `(visibility, created_at DESC)` allows the engine to fetch the latest 20 posts in `O(log N)` without scanning millions of rows or executing a costly filesort.
+* **Profile Feed Retrieval**: Fetching a specific user's posts sorted by date uses the composite index `(user_id, created_at DESC)` or `(user_id, visibility, created_at DESC)`.
 
 ### 3. Quick "Has Reacted" Check
 * When rendering a feed page of 20 posts, we must show whether the current user reacted to each post and what reaction type they used.
