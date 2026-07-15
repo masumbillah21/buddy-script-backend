@@ -31,7 +31,9 @@ class PostService
 
     public function createPost(CreatePostDTO $dto): Post
     {
-        return $this->postRepository->create($dto->toArray());
+        $post = $this->postRepository->create($dto->toArray());
+        Cache::put("post:{$post->id}", $post, self::CACHE_TTL);
+        return $post;
     }
 
     public function getPost(string $id, ?string $currentUserId): Post

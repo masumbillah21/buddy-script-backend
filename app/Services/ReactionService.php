@@ -39,6 +39,7 @@ class ReactionService
                 } else {
                     // Update reaction type: counter remains unchanged
                     $this->reactionRepository->updatePostReaction($reaction, $dto->reaction_type);
+                    Cache::forget("post:{$dto->post_id}");
                     return $reaction->fresh();
                 }
             } else {
@@ -55,8 +56,8 @@ class ReactionService
     {
         return DB::transaction(function () use ($dto) {
             // Verify comment exists
-            $commentExists = DB::table('comments')->where('id', $dto->comment_id)->exists();
-            if (!$commentExists) {
+            $comment = DB::table('comments')->where('id', $dto->comment_id)->first();
+            if (!$comment) {
                 abort(404, 'Comment not found');
             }
 
@@ -68,16 +69,19 @@ class ReactionService
                     // Toggle off
                     $this->reactionRepository->deleteCommentReaction($reaction);
                     DB::table('comments')->where('id', $dto->comment_id)->decrement('reactions_count');
+                    Cache::forget("post:{$comment->post_id}");
                     return null;
                 } else {
                     // Update type
                     $this->reactionRepository->updateCommentReaction($reaction, $dto->reaction_type);
+                    Cache::forget("post:{$comment->post_id}");
                     return $reaction->fresh();
                 }
             } else {
                 // New reaction
                 $newReaction = $this->reactionRepository->createCommentReaction($dto->toArray());
                 DB::table('comments')->where('id', $dto->comment_id)->increment('reactions_count');
+                Cache::forget("post:{$comment->post_id}");
                 return $newReaction;
             }
         });
