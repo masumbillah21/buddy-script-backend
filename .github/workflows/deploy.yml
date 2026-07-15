@@ -1,4 +1,4 @@
-name: 🚀 Laravel Backend Deploy via SSH (Namecheap)
+name: 🚀 Laravel Backend Deploy
 
 on:
   push:
