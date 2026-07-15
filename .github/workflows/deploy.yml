@@ -86,11 +86,13 @@ jobs:
             echo "🚧 Putting site into maintenance mode..."
             $PHP_CLI artisan down || true
 
-            echo "🔑 Ensuring app key exists..."
+            echo "🔑 Ensuring app key exists & directory permissions..."
             $PHP_CLI artisan key:generate --force
+            chmod -R 775 storage bootstrap/cache || true
 
-            echo "🗄️ Running migrations..."
+            echo "🗄️ Running migrations & seeding sample data..."
             $PHP_CLI artisan migrate --force
+            $PHP_CLI artisan db:seed --force || true
 
             echo "🧹 Clearing and caching configurations..."
             $PHP_CLI artisan optimize:clear
