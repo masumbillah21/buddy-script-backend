@@ -4,7 +4,7 @@ This is the Laravel-based backend API service for the Appifylab Social Platform,
 
 ---
 
-## 🌐 Production & Live Deployment Links
+## Production & Live Deployment Links
 
 * **Live Web Application**: [http://buddy-script.masum-billah.com/](http://buddy-script.masum-billah.com/)
 * **Live API Base Endpoint**: [http://buddy-api.masum-billah.com/api](http://buddy-api.masum-billah.com/api)
