@@ -32,6 +32,7 @@ class PostService
     public function createPost(CreatePostDTO $dto): Post
     {
         $post = $this->postRepository->create($dto->toArray());
+        $post->loadMissing('user');
         Cache::put("post:{$post->id}", $post, self::CACHE_TTL);
         return $post;
     }

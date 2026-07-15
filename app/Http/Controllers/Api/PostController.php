@@ -120,7 +120,7 @@ class PostController extends Controller
             $post->setAttribute('my_reaction', $myReactions[$id] ?? null);
         }
 
-        return (new PostResource($post->load('user')))
+        return (new PostResource($post->loadMissing('user')))
             ->response();
     }
 

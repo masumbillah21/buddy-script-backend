@@ -23,6 +23,8 @@ return new class extends Migration
 
             // Indexes for scalability
             $table->index(['post_id', 'parent_id', 'created_at']);
+            $table->index('user_id');
+            $table->index('parent_id');
         });
 
         // Add self-referencing foreign key after table creation so PostgreSQL recognizes the primary key

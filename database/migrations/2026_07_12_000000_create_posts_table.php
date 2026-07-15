@@ -27,6 +27,8 @@ return new class extends Migration
 
             // Indexes for scalability
             $table->index(['visibility', 'created_at']);
+            $table->index(['user_id', 'created_at']);
+            $table->index(['user_id', 'visibility', 'created_at']);
         });
     }
 
