@@ -5,12 +5,12 @@ namespace App\Repositories\Eloquent;
 use App\Models\PostReaction;
 use App\Models\CommentReaction;
 use App\Repositories\Contracts\ReactionRepositoryInterface;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\CursorPaginator;
 
 class ReactionRepository implements ReactionRepositoryInterface
 {
     // Post reactions
-    public function findPostReaction(int $userId, int $postId): ?PostReaction
+    public function findPostReaction(string $userId, string $postId): ?PostReaction
     {
         return PostReaction::where('user_id', $userId)
             ->where('post_id', $postId)
@@ -35,7 +35,7 @@ class ReactionRepository implements ReactionRepositoryInterface
         return $reaction->save();
     }
 
-    public function getPostReactions(int $postId, ?string $type = null, int $perPage = 20): LengthAwarePaginator
+    public function getPostReactions(string $postId, ?string $type = null, int $perPage = 20): CursorPaginator
     {
         $query = PostReaction::with('user')
             ->where('post_id', $postId)
@@ -45,10 +45,10 @@ class ReactionRepository implements ReactionRepositoryInterface
             $query->where('reaction_type', $type);
         }
 
-        return $query->paginate($perPage);
+        return $query->cursorPaginate($perPage);
     }
 
-    public function getPostReactionTypesForUser(int $userId, array $postIds): array
+    public function getPostReactionTypesForUser(string $userId, array $postIds): array
     {
         return PostReaction::where('user_id', $userId)
             ->whereIn('post_id', $postIds)
@@ -57,7 +57,7 @@ class ReactionRepository implements ReactionRepositoryInterface
     }
 
     // Comment reactions
-    public function findCommentReaction(int $userId, int $commentId): ?CommentReaction
+    public function findCommentReaction(string $userId, string $commentId): ?CommentReaction
     {
         return CommentReaction::where('user_id', $userId)
             ->where('comment_id', $commentId)
@@ -80,15 +80,15 @@ class ReactionRepository implements ReactionRepositoryInterface
         return $reaction->save();
     }
 
-    public function getCommentReactions(int $commentId, int $perPage = 20): LengthAwarePaginator
+    public function getCommentReactions(string $commentId, int $perPage = 20): CursorPaginator
     {
         return CommentReaction::with('user')
             ->where('comment_id', $commentId)
             ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+            ->cursorPaginate($perPage);
     }
 
-    public function getCommentReactionTypesForUser(int $userId, array $commentIds): array
+    public function getCommentReactionTypesForUser(string $userId, array $commentIds): array
     {
         return CommentReaction::where('user_id', $userId)
             ->whereIn('comment_id', $commentIds)

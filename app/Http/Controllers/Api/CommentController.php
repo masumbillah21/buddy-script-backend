@@ -18,11 +18,11 @@ class CommentController extends Controller
         protected ReactionService $reactionService
     ) {}
 
-    public function index(Request $request, int $postId): JsonResponse
+    public function index(Request $request, string $postId): JsonResponse
     {
         $comments = $this->commentService->getComments($postId, (int) $request->input('per_page', 20));
 
-        if ($comments->isNotEmpty()) {
+        if (collect($comments->items())->isNotEmpty()) {
             $commentIds = [];
             foreach ($comments as $comment) {
                 $commentIds[] = $comment->id;
@@ -64,10 +64,10 @@ class CommentController extends Controller
             ->response();
     }
 
-    public function store(Request $request, int $postId): JsonResponse
+    public function store(Request $request, string $postId): JsonResponse
     {
         $request->validate([
-            'parent_id' => 'nullable|integer',
+            'parent_id' => 'nullable|uuid',
             'content' => 'required|string|max:5000',
         ]);
         

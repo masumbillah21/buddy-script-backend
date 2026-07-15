@@ -7,12 +7,12 @@ use Illuminate\Http\Request;
 class ReactToCommentDTO
 {
     public function __construct(
-        public readonly int $comment_id,
-        public readonly int $user_id,
+        public readonly string $comment_id,
+        public readonly string $user_id,
         public readonly string $reaction_type
     ) {}
 
-    public static function fromRequest(Request $request, int $commentId): self
+    public static function fromRequest(Request $request, string $commentId): self
     {
         return new self(
             comment_id: $commentId,

@@ -7,10 +7,14 @@ use App\DTOs\Post\UpdatePostDTO;
 use App\Models\Post;
 use App\Repositories\Contracts\PostRepositoryInterface;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Support\Facades\Cache;
 
 class PostService
 {
+    /** Cache TTL in seconds (10 minutes) */
+    private const CACHE_TTL = 600;
+
     public function __construct(
         protected PostRepositoryInterface $postRepository
     ) {}
@@ -20,7 +24,7 @@ class PostService
         return $this->postRepository->getFeed($perPage);
     }
 
-    public function getUserFeed(int $userId, ?int $currentUserId, int $perPage = 20): CursorPaginator
+    public function getUserFeed(string $userId, ?string $currentUserId, int $perPage = 20): CursorPaginator
     {
         return $this->postRepository->getUserFeed($userId, $currentUserId, $perPage);
     }
@@ -30,9 +34,11 @@ class PostService
         return $this->postRepository->create($dto->toArray());
     }
 
-    public function getPost(int $id, ?int $currentUserId): Post
+    public function getPost(string $id, ?string $currentUserId): Post
     {
-        $post = $this->postRepository->findById($id);
+        $post = Cache::remember("post:{$id}", self::CACHE_TTL, function () use ($id) {
+            return $this->postRepository->findById($id);
+        });
 
         if (!$post) {
             abort(404, 'Post not found');
@@ -45,7 +51,7 @@ class PostService
         return $post;
     }
 
-    public function updatePost(Post $post, UpdatePostDTO $dto, int $userId): Post
+    public function updatePost(Post $post, UpdatePostDTO $dto, string $userId): Post
     {
         if ($post->user_id !== $userId) {
             throw new AuthorizationException('You are not authorized to update this post.');
@@ -53,15 +59,21 @@ class PostService
 
         $this->postRepository->update($post, $dto->data);
 
+        Cache::forget("post:{$post->id}");
+
         return $post->fresh(['user']);
     }
 
-    public function deletePost(Post $post, int $userId): bool
+    public function deletePost(Post $post, string $userId): bool
     {
         if ($post->user_id !== $userId) {
             throw new AuthorizationException('You are not authorized to delete this post.');
         }
 
-        return $this->postRepository->delete($post);
+        $result = $this->postRepository->delete($post);
+
+        Cache::forget("post:{$post->id}");
+
+        return $result;
     }
 }

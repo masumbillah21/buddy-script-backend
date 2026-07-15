@@ -24,10 +24,12 @@ class PostController extends Controller
         $posts = $this->postService->getFeed((int) $request->input('per_page', 20));
 
         $currentUserId = $request->user('sanctum')?->id;
-        if ($currentUserId && $posts->isNotEmpty()) {
+        $items = collect($posts->items());
+
+        if ($currentUserId && $items->isNotEmpty()) {
             $myReactions = $this->reactionService->getPostReactionTypesForUser(
                 $currentUserId,
-                $posts->pluck('id')->toArray()
+                $items->pluck('id')->toArray()
             );
 
             foreach ($posts as $post) {
@@ -35,21 +37,23 @@ class PostController extends Controller
             }
         }
 
-        $posts->load('user');
+        $items->load('user');
 
         return PostResource::collection($posts)
             ->response();
     }
 
-    public function userFeed(Request $request, int $userId): JsonResponse
+    public function userFeed(Request $request, string $userId): JsonResponse
     {
         $currentUserId = $request->user('sanctum')?->id;
         $posts = $this->postService->getUserFeed($userId, $currentUserId, (int) $request->input('per_page', 20));
 
-        if ($currentUserId && $posts->isNotEmpty()) {
+        $items = collect($posts->items());
+
+        if ($currentUserId && $items->isNotEmpty()) {
             $myReactions = $this->reactionService->getPostReactionTypesForUser(
                 $currentUserId,
-                $posts->pluck('id')->toArray()
+                $items->pluck('id')->toArray()
             );
 
             foreach ($posts as $post) {
@@ -57,7 +61,7 @@ class PostController extends Controller
             }
         }
 
-        $posts->load('user');
+        $items->load('user');
 
         return PostResource::collection($posts)
             ->response();
@@ -112,7 +116,7 @@ class PostController extends Controller
             ->setStatusCode(201);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $currentUserId = request()->user('sanctum')?->id;
         $post = $this->postService->getPost($id, $currentUserId);

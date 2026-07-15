@@ -18,11 +18,15 @@ services:
       - DB_DATABASE=${DB_DATABASE:-buddy_script}
       - DB_USERNAME=${DB_USERNAME:-laravel}
       - DB_PASSWORD=${DB_PASSWORD:-password}
+      - CACHE_STORE=redis
+      - REDIS_HOST=redis
     env_file:
       - .env
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - buddy_network
     volumes:
@@ -48,6 +52,22 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - buddy_network
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 networks:
   buddy_network:
     name: buddy_network
@@ -55,3 +75,4 @@ networks:
 volumes:
   postgres-data:
   backend-uploads:
+  redis-data:

@@ -4,17 +4,17 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Comment;
 use App\Repositories\Contracts\CommentRepositoryInterface;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\CursorPaginator;
 
 class CommentRepository implements CommentRepositoryInterface
 {
-    public function getCommentsForPost(int $postId, int $perPage = 20): LengthAwarePaginator
+    public function getCommentsForPost(string $postId, int $perPage = 20): CursorPaginator
     {
         return Comment::with(['user', 'replies.user'])
             ->where('post_id', $postId)
             ->whereNull('parent_id')
             ->orderBy('created_at', 'asc')
-            ->paginate($perPage);
+            ->cursorPaginate($perPage);
     }
 
     public function create(array $data): Comment
@@ -22,7 +22,7 @@ class CommentRepository implements CommentRepositoryInterface
         return Comment::create($data);
     }
 
-    public function findById(int $id): ?Comment
+    public function findById(string $id): ?Comment
     {
         return Comment::find($id);
     }

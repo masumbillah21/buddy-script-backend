@@ -6,7 +6,8 @@ use App\DTOs\Comment\CreateCommentDTO;
 use App\Models\Comment;
 use App\Repositories\Contracts\CommentRepositoryInterface;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CommentService
@@ -15,7 +16,7 @@ class CommentService
         protected CommentRepositoryInterface $commentRepository
     ) {}
 
-    public function getComments(int $postId, int $perPage = 20): LengthAwarePaginator
+    public function getComments(string $postId, int $perPage = 20): CursorPaginator
     {
         return $this->commentRepository->getCommentsForPost($postId, $perPage);
     }
@@ -50,11 +51,14 @@ class CommentService
                 DB::table('comments')->where('id', $dto->parent_id)->increment('replies_count');
             }
 
+            // Invalidate cached post since comments_count changed
+            Cache::forget("post:{$dto->post_id}");
+
             return $comment->load('user');
         });
     }
 
-    public function deleteComment(Comment $comment, int $userId): bool
+    public function deleteComment(Comment $comment, string $userId): bool
     {
         return DB::transaction(function () use ($comment, $userId) {
             if ($comment->user_id !== $userId) {
@@ -74,6 +78,9 @@ class CommentService
             }
 
             $this->commentRepository->delete($comment);
+
+            // Invalidate cached post since comments_count changed
+            Cache::forget("post:{$comment->post_id}");
 
             return true;
         });

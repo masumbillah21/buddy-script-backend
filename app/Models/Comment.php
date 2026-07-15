@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 #[Fillable(['post_id', 'user_id', 'parent_id', 'content', 'reactions_count', 'replies_count'])]
 class Comment extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $casts = [
         'reactions_count' => 'integer',

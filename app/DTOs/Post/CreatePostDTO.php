@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 class CreatePostDTO
 {
     public function __construct(
-        public readonly int $user_id,
+        public readonly string $user_id,
         public readonly ?string $content,
         public readonly ?string $image_path,
         public readonly ?string $video_path,

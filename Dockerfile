@@ -24,6 +24,7 @@ RUN chmod +x /usr/local/bin/install-php-extensions && \
     sqlite3 \
     pdo_pgsql \
     pgsql \
+    redis \
     zip \
     bcmath \
     opcache \

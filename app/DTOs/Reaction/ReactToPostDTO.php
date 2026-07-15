@@ -7,12 +7,12 @@ use Illuminate\Http\Request;
 class ReactToPostDTO
 {
     public function __construct(
-        public readonly int $post_id,
-        public readonly int $user_id,
+        public readonly string $post_id,
+        public readonly string $user_id,
         public readonly string $reaction_type
     ) {}
 
-    public static function fromRequest(Request $request, int $postId): self
+    public static function fromRequest(Request $request, string $postId): self
     {
         return new self(
             post_id: $postId,

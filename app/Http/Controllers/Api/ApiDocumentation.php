@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use OpenApi\Attributes as OA;
 
+if (!defined('L5_SWAGGER_CONST_HOST')) {
+    define('L5_SWAGGER_CONST_HOST', env('APP_URL', 'http://localhost:8000'));
+}
+
 /**
  * Base API Specifications
  */
@@ -518,7 +522,7 @@ class ApiDocumentation
 #[OA\Schema(
     schema: "User",
     properties: [
-        new OA\Property(property: "id", type: "integer", example: 1),
+        new OA\Property(property: "id", type: "string", format: "uuid", example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"),
         new OA\Property(property: "first_name", type: "string", example: "John"),
         new OA\Property(property: "last_name", type: "string", example: "Doe"),
         new OA\Property(property: "email", type: "string", format: "email", example: "john.doe@example.com"),
@@ -530,7 +534,7 @@ class UserSchema {}
 #[OA\Schema(
     schema: "Post",
     properties: [
-        new OA\Property(property: "id", type: "integer", example: 1),
+        new OA\Property(property: "id", type: "string", format: "uuid", example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"),
         new OA\Property(property: "user", ref: "#/components/schemas/User"),
         new OA\Property(property: "content", type: "string", nullable: true, example: "Hello World!"),
         new OA\Property(property: "image_path", type: "string", nullable: true, example: "uploads/posts/image.jpg"),
@@ -547,10 +551,10 @@ class PostSchema {}
 #[OA\Schema(
     schema: "Comment",
     properties: [
-        new OA\Property(property: "id", type: "integer", example: 1),
-        new OA\Property(property: "post_id", type: "integer", example: 1),
+        new OA\Property(property: "id", type: "string", format: "uuid", example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"),
+        new OA\Property(property: "post_id", type: "string", format: "uuid", example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"),
         new OA\Property(property: "user", ref: "#/components/schemas/User"),
-        new OA\Property(property: "parent_id", type: "integer", nullable: true, example: null),
+        new OA\Property(property: "parent_id", type: "string", format: "uuid", nullable: true, example: null),
         new OA\Property(property: "content", type: "string", example: "This is a comment"),
         new OA\Property(property: "reactions_count", type: "integer", example: 2),
         new OA\Property(property: "replies_count", type: "integer", example: 1),
@@ -564,7 +568,7 @@ class CommentSchema {}
 #[OA\Schema(
     schema: "Reaction",
     properties: [
-        new OA\Property(property: "id", type: "integer", example: 1),
+        new OA\Property(property: "id", type: "string", format: "uuid", example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"),
         new OA\Property(property: "user", ref: "#/components/schemas/User"),
         new OA\Property(property: "reaction_type", type: "string", example: "like"),
         new OA\Property(property: "created_at", type: "string", format: "date-time", example: "2026-07-12T13:22:00Z")
@@ -575,7 +579,7 @@ class ReactionSchema {}
 #[OA\Schema(
     schema: "ReactionUser",
     properties: [
-        new OA\Property(property: "id", type: "integer", example: 1),
+        new OA\Property(property: "id", type: "string", format: "uuid", example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"),
         new OA\Property(property: "first_name", type: "string", example: "John"),
         new OA\Property(property: "last_name", type: "string", example: "Doe"),
         new OA\Property(property: "email", type: "string", format: "email", example: "john.doe@example.com"),

@@ -7,7 +7,8 @@ use App\DTOs\Reaction\ReactToCommentDTO;
 use App\Models\PostReaction;
 use App\Models\CommentReaction;
 use App\Repositories\Contracts\ReactionRepositoryInterface;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ReactionService
@@ -33,6 +34,7 @@ class ReactionService
                     // Toggle off: remove reaction, decrement counter
                     $this->reactionRepository->deletePostReaction($reaction);
                     DB::table('posts')->where('id', $dto->post_id)->decrement('reactions_count');
+                    Cache::forget("post:{$dto->post_id}");
                     return null;
                 } else {
                     // Update reaction type: counter remains unchanged
@@ -43,6 +45,7 @@ class ReactionService
                 // New reaction: create reaction, increment counter
                 $newReaction = $this->reactionRepository->createPostReaction($dto->toArray());
                 DB::table('posts')->where('id', $dto->post_id)->increment('reactions_count');
+                Cache::forget("post:{$dto->post_id}");
                 return $newReaction;
             }
         });
@@ -80,22 +83,22 @@ class ReactionService
         });
     }
 
-    public function getPostReactions(int $postId, ?string $type = null, int $perPage = 20): LengthAwarePaginator
+    public function getPostReactions(string $postId, ?string $type = null, int $perPage = 20): CursorPaginator
     {
         return $this->reactionRepository->getPostReactions($postId, $type, $perPage);
     }
 
-    public function getCommentReactions(int $commentId, int $perPage = 20): LengthAwarePaginator
+    public function getCommentReactions(string $commentId, int $perPage = 20): CursorPaginator
     {
         return $this->reactionRepository->getCommentReactions($commentId, $perPage);
     }
 
-    public function getPostReactionTypesForUser(int $userId, array $postIds): array
+    public function getPostReactionTypesForUser(string $userId, array $postIds): array
     {
         return $this->reactionRepository->getPostReactionTypesForUser($userId, $postIds);
     }
 
-    public function getCommentReactionTypesForUser(int $userId, array $commentIds): array
+    public function getCommentReactionTypesForUser(string $userId, array $commentIds): array
     {
         return $this->reactionRepository->getCommentReactionTypesForUser($userId, $commentIds);
     }

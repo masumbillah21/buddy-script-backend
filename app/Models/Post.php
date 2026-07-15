@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 #[Fillable(['user_id', 'content', 'image_path', 'video_path', 'title', 'type', 'event_date', 'visibility', 'reactions_count', 'comments_count'])]
 class Post extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $casts = [
         'reactions_count' => 'integer',

@@ -4,7 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Post;
 use App\Repositories\Contracts\PostRepositoryInterface;
-use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Pagination\CursorPaginator;
 
 class PostRepository implements PostRepositoryInterface
 {
@@ -12,15 +12,15 @@ class PostRepository implements PostRepositoryInterface
     {
         return Post::with('user')
             ->where('visibility', 'public')
-            ->orderBy('id', 'desc')
+            ->orderBy('created_at', 'desc')
             ->cursorPaginate($perPage);
     }
 
-    public function getUserFeed(int $userId, ?int $currentUserId, int $perPage = 20): CursorPaginator
+    public function getUserFeed(string $userId, ?string $currentUserId, int $perPage = 20): CursorPaginator
     {
         $query = Post::with('user')
             ->where('user_id', $userId)
-            ->orderBy('id', 'desc');
+            ->orderBy('created_at', 'desc');
 
         if ($currentUserId !== $userId) {
             $query->where('visibility', 'public');
@@ -34,7 +34,7 @@ class PostRepository implements PostRepositoryInterface
         return Post::create($data);
     }
 
-    public function findById(int $id): ?Post
+    public function findById(string $id): ?Post
     {
         return Post::with('user')->find($id);
     }

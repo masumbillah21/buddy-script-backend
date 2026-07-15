@@ -17,7 +17,7 @@ class ReactionController extends Controller
         protected ReactionService $reactionService
     ) {}
 
-    public function reactToPost(Request $request, int $postId): JsonResponse
+    public function reactToPost(Request $request, string $postId): JsonResponse
     {
         $request->validate([
             'reaction_type' => 'required|string|in:like,love,haha,wow,sad,angry',
@@ -39,7 +39,7 @@ class ReactionController extends Controller
         ]);
     }
 
-    public function reactToComment(Request $request, int $commentId): JsonResponse
+    public function reactToComment(Request $request, string $commentId): JsonResponse
     {
         $request->validate([
             'reaction_type' => 'required|string|in:like,love,haha,wow,sad,angry',
@@ -61,7 +61,7 @@ class ReactionController extends Controller
         ]);
     }
 
-    public function postReactions(Request $request, int $postId): JsonResponse
+    public function postReactions(Request $request, string $postId): JsonResponse
     {
         $type = $request->input('reaction_type');
         $reactions = $this->reactionService->getPostReactions($postId, $type, (int) $request->input('per_page', 20));
@@ -70,7 +70,7 @@ class ReactionController extends Controller
             ->response();
     }
 
-    public function commentReactions(Request $request, int $commentId): JsonResponse
+    public function commentReactions(Request $request, string $commentId): JsonResponse
     {
         $reactions = $this->reactionService->getCommentReactions($commentId, (int) $request->input('per_page', 20));
 
