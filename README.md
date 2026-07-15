@@ -1,11 +1,21 @@
 # Appifylab Social Platform API (Backend)
 
-This is the Laravel-based backend API service for the Appifylab Social Platform task, supplying token authentication, post feeds, event/article postings, nested comments/replies, dynamic reactions, and Swagger documentation.
+This is the Laravel-based backend API service for the Appifylab Social Platform, supplying token authentication, post feeds, event/article postings, nested comments/replies, dynamic reactions, and Swagger documentation.
+
+---
+
+## 🌐 Production & Live Deployment Links
+
+* **Live Web Application**: [http://buddy-script.masum-billah.com/](http://buddy-script.masum-billah.com/)
+* **Live API Base Endpoint**: [http://buddy-api.masum-billah.com/api](http://buddy-api.masum-billah.com/api)
+* **Live OpenAPI / Swagger Documentation**: [http://buddy-api.masum-billah.com/api/documentation](http://buddy-api.masum-billah.com/api/documentation)
+
+---
 
 ## Tech Stack & Architecture
-* **Framework**: Laravel 13 (PHP 8.4-FPM)
-* **Database**: PostgreSQL (containerized service with persistent data volume)
-* **Process Manager**: Supervisord (managing PHP-FPM and Nginx)
+* **Framework**: Laravel 13 (PHP 8.4)
+* **Database**: MySQL / MariaDB (Namecheap cPanel Shared Hosting & Docker PostgreSQL for local dev)
+* **CI/CD Pipeline**: GitHub Actions SSH & SCP automated deployment
 * **API Documentation**: OpenAPI / Swagger (via DarkaOnline/L5-Swagger)
 
 ---
@@ -27,7 +37,8 @@ This is the Laravel-based backend API service for the Appifylab Social Platform 
    * Batch distinct active reaction types loader to optimize SQL query speeds on feeds.
 5. **Interactive Swagger Documentation**:
    * OpenAPI endpoints fully documented and interactive.
-   * Available locally at: [http://localhost:8000/api/documentation](http://localhost:8000/api/documentation).
+   * Available live at: [http://buddy-api.masum-billah.com/api/documentation](http://buddy-api.masum-billah.com/api/documentation)
+   * Available locally at: [http://localhost:8000/api/documentation](http://localhost:8000/api/documentation)
 
 ---
 
@@ -43,31 +54,20 @@ To support immediate testing, we configured the following seeder structure insid
 
 ---
 
-## Setup & Local Development
+## Setup & Development
 
-### 1. Build and Run Containers
-Rebuild the container images and spin up the Docker network:
+### 1. Local Docker Setup
 ```bash
 docker compose up --build -d
 ```
 The backend service will listen on [http://localhost:8000](http://localhost:8000).
 
 ### 2. Run Database Migrations and Seeders
-To reset the PostgreSQL schema and seed the database manually inside the running container:
 ```bash
 docker compose exec backend php artisan migrate:fresh --seed
 ```
 
 ### 3. Generate Swagger OpenAPI Docs
-If you modify endpoints or Swagger annotations, regenerate the output files:
 ```bash
 docker compose exec backend php artisan l5-swagger:generate
 ```
-
----
-
-## Large Media Configuration
-PHP-FPM and Nginx have been configured inside the container environment to handle large file uploads up to **60MB** (e.g. video files) to prevent `413 Request Entity Too Large` errors:
-* Custom config injection at: `/usr/local/etc/php/conf.d/uploads.ini` (`upload_max_filesize=60M`, `post_max_size=60M`).
-* Nginx directive: `client_max_body_size 60M;`.
-
