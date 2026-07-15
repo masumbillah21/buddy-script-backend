@@ -40,15 +40,17 @@ COPY nginx.conf /etc/nginx/http.d/default.conf
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-# Ensure entrypoint is executable
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Ensure entrypoint has Unix line endings and is executable
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Copy application files (with correct permissions)
 COPY --chown=www-data:www-data . /var/www/html
 
 # Run composer install
-# Note: Since .env might not exist yet, we run with --no-scripts to prevent Laravel hooks from failing
-RUN composer install --no-interaction --no-plugins --no-scripts --prefer-dist
+ENV COMPOSER_HTTP_TIMEOUT=600
+RUN composer config -g process-timeout 600 && \
+    composer install --prefer-dist --no-interaction --no-plugins --no-scripts
 
 # Run composer autoload optimization
 RUN composer dump-autoload --optimize --classmap-authoritative

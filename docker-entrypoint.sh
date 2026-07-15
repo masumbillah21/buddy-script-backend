@@ -40,7 +40,7 @@ fi
 
 # Run database migrations
 echo "Running migrations..."
-php artisan migrate --force
+php artisan migrate:fresh --force
 
 # Seed database if requested via SEED_DATABASE env variable
 if [ "$SEED_DATABASE" = "true" ]; then
