@@ -36,9 +36,6 @@ class PostController extends Controller
                 $post->setAttribute('my_reaction', $myReactions[$post->id] ?? null);
             }
         }
-
-        $items->load('user');
-
         return PostResource::collection($posts)
             ->response();
     }
@@ -60,9 +57,6 @@ class PostController extends Controller
                 $post->setAttribute('my_reaction', $myReactions[$post->id] ?? null);
             }
         }
-
-        $items->load('user');
-
         return PostResource::collection($posts)
             ->response();
     }
