@@ -88,6 +88,9 @@ jobs:
             $PHP_CLI artisan config:cache
             $PHP_CLI artisan route:cache
 
+            echo "📚 Generating Swagger API Documentation..."
+            $PHP_CLI artisan l5-swagger:generate || true
+
             echo "🚀 Restarting queues..."
             $PHP_CLI artisan queue:restart || true
 
