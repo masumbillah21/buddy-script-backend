@@ -71,15 +71,15 @@ jobs:
           script: |
             cd ${{ secrets.SERVER_TARGET_PATH }}
 
-            # Detect cPanel CloudLinux / EasyApache PHP CLI binary with PDO extensions enabled
+            # Detect cPanel CloudLinux / EasyApache PHP CLI binary with PDO & mbstring extensions enabled
             if [ -f /opt/alt/php84/usr/bin/php ]; then
-              PHP_CLI=/opt/alt/php84/usr/bin/php
+              PHP_CLI="/opt/alt/php84/usr/bin/php -d extension=mbstring.so"
             elif [ -f /opt/alt/php83/usr/bin/php ]; then
-              PHP_CLI=/opt/alt/php83/usr/bin/php
+              PHP_CLI="/opt/alt/php83/usr/bin/php -d extension=mbstring.so"
             elif [ -f /usr/local/bin/ea-php83 ]; then
-              PHP_CLI=/usr/local/bin/ea-php83
+              PHP_CLI="/usr/local/bin/ea-php83 -d extension=mbstring.so"
             else
-              PHP_CLI=php
+              PHP_CLI="php -d extension=mbstring.so"
             fi
             echo "Using PHP binary: $PHP_CLI"
 
